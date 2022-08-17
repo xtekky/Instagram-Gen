@@ -207,7 +207,7 @@ class Instagram:
         with requests.Session() as session:
             headers = self.__get_headers(session)
             print(Utils.sprint("*", headers))
-            x = self.__init_create(session, "Felipe@0411", "zfzoeignzgz@gmail.com", "roinerfe3", "Felipe")
+            x = self.__init_create(session, "erfeferf", "zfzoeignzgz@gmail.com", "roinerfe3", "erfefe")
             print(Utils.sprint("*", x))
             
 
