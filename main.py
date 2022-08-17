@@ -4,10 +4,47 @@ import json
 import time
 import re
 import string
+import curlify
+import httpx
+from pystyle import Col
+
 
 class Email:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, proxy: str= None, timeout: int=15) -> None:
+        self.session = httpx.Client(headers={'content-type': 'application/json'}, timeout=timeout, proxies=proxy)
+        self.base_url = 'https://api.mail.gw'
+    
+    def get_domains(self) -> list:
+        domains: list = []
+        
+        for item in self.session.get(f'{self.base_url}/domains').json()['hydra:member']:
+            domains.append(item['domain'])
+
+        return domains
+
+    def get_mail(self, name: str = ''.join(random.choice(string.ascii_lowercase) for _ in range(15)), password: str= None, domain: str = None) -> str:
+        mail: str =  f'{name}@{domain if domain != None else self.get_domains()[0]}'
+        response: int = self.session.post(f'{self.base_url}/accounts', json={'address': mail, 'password': mail}).status_code
+        
+        try:
+            if response == 201:
+                token = self.session.post(f'{self.base_url}/token', json={'address': mail, 'password': mail if password == None else password}).json()['token']
+                self.session.headers['authorization'] = f'Bearer {token}'
+                return mail
+        except:
+            return 'Email creation error.'
+    
+    def fetch_inbox(self):
+        response = self.session.get(f'{self.base_url}/messages').json()['hydra:member']
+        return response
+    
+    def get_message(self, message_id: str):
+        response = self.session.get(f'{self.base_url}/messages/{message_id}').json()
+        return response
+    
+    def get_message_content(self, message_id: str):
+        response = self.get_message(message_id)['text']
+        return response
 
 class Utils:
     @staticmethod
@@ -30,11 +67,23 @@ class Utils:
         digits.reverse()
         return "".join(digits)
     
+    @staticmethod
     def cookie_to_headers(cookies: dict) -> dict:
         cookies_str = ""
         for i in cookies.items():
             cookies_str = cookies_str + i[0] + "=" + i[1] + "; "
         return cookies_str[:len(cookies_str) - 2]
+    
+    @staticmethod
+    def sprint(x: str, msg: str) -> None:
+        return '%s{%s%s%s}%s %s[%s%s%s]%s' % (
+            Col.purple, Col.reset,
+            x, 
+            Col.purple, Col.reset,
+            Col.blue, Col.reset,
+            msg,
+            Col.blue, Col.reset
+        )
 
 class Instagram:
     def __init__(self) -> None:
@@ -127,7 +176,7 @@ class Instagram:
     def __init_create(self, session: requests.Session, password: str, email: str, username: str, first_name: str) -> None:
 
         payload = {
-            "enc_password": f"#PWD_INSTAGRAM_BROWSER:10:{int(time.time())}:{password}",
+            "enc_password": f"#PWD_INSTAGRAM_BROWSER:0:{int(time.time())}:{password}",
             "email": email,
             "username": username,
             "first_name": first_name,
@@ -141,16 +190,42 @@ class Instagram:
             data = payload, 
             headers = self.__base_headers(session)
         )
-
-        print(response.text)
+        
+        if 'Try Again Later' in response.text:
+            return False
+            
+        elif response.json()["dryrun_passed"] is True or response.json()["dryrun_passed"] == 'true':
+            return True
+        
+        elif "username isn't" in response.text:
+            return False
+            
+        else:
+            True
         
     def main(self) -> None:
         with requests.Session() as session:
             headers = self.__get_headers(session)
-            print(headers)
-            #self.__init_create(session, "zefezf", "zfzoeignzgz@gmail.com", "roingreogi9293", "zfzef")
-            # __shared_data = self.__shared_data(session, headers)
-            # print(__shared_data)
+            print(Utils.sprint("*", headers))
+            x = self.__init_create(session, "Felipe@0411", "zfzoeignzgz@gmail.com", "roinerfe3", "Felipe")
+            print(Utils.sprint("*", x))
+            
 
 if __name__ == '__main__':
     Instagram().main()
+    # api = Email()
+
+    # email = api.get_mail()
+    # print(f'Your temp-mail: {email}')
+    # code = None
+    # while True:
+    #     time.sleep(3)
+    #     for mail in api.fetch_inbox():
+    #         content = api.get_message_content(mail['id'])
+    #         code = re.findall(r'(\d{6,6})', content)[0]
+            
+    #         if code:
+    #             print(f"code: {code}")
+    #             break
+    #     if code:
+    #         break
