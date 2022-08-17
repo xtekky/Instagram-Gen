@@ -148,7 +148,7 @@ class Instagram:
         with requests.Session() as session:
             headers = self.__get_headers(session)
             print(headers)
-            self.__init_create(session, "Felipe@0411", "zfzoeignzgz@gmail.com", "roingreogi9293", "Felipe")
+            #self.__init_create(session, "zefezf", "zfzoeignzgz@gmail.com", "roingreogi9293", "zfzef")
             # __shared_data = self.__shared_data(session, headers)
             # print(__shared_data)
 
