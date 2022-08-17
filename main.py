@@ -12,7 +12,7 @@ from pystyle import Col
 class Email:
     def __init__(self, proxy: str= None, timeout: int=15) -> None:
         self.session = httpx.Client(headers={'content-type': 'application/json'}, timeout=timeout, proxies=proxy)
-        self.base_url = 'https://api.mail.gw'
+        self.base_url = 'https://api.mail.tm'
     
     def get_domains(self) -> list:
         domains: list = []
@@ -87,22 +87,23 @@ class Utils:
     
     @staticmethod
     def encrypt_password(password: str) -> str:
-        data = requests.get("https://www.instagram.com/data/shared_data/").json()["encryption"]
+        # data = requests.get("https://www.instagram.com/data/shared_data/").json()["encryption"]
         
-        public_key = data["public_key"]
-        key_id = data["key_id"]
-        version = data["version"]
+        # public_key = data["public_key"]
+        # key_id = data["key_id"]
+        # version = data["version"]
         return f"#PWD_INSTAGRAM_BROWSER:0:{int(time.time())}:{password}"
 
 
 class Instagram:
-    def __init__(self) -> None:
+    def __init__(self, proxy = None) -> None:
         self.mid          = None
         self.crsf         = None
         self.asbd_id      = None
         self.fbapp_id     = None
         self.device_id    = None
         self.rollout_hash = None
+        self.proxies      = {'http': f'http://{proxy}', 'https': f'http://{proxy}'} if proxy != None else None
 
     @staticmethod
     def __x_mid() -> str:
@@ -168,7 +169,8 @@ class Instagram:
                 "https://"
                 + "www.instagram.com"
             ),
-            headers = headers
+            headers = headers,
+            proxies=self.proxies
         ).text
 
         self.device_id    = re.findall(r'(?<="device_id":")[A-Z0-9\-]{35,36}', data)[0]
@@ -183,24 +185,25 @@ class Instagram:
         return session.cookies.get_dict()
     
     
-    def __init_create(self, session: requests.Session, password: str, email: str, username: str, first_name: str) -> bool:
+    def __init_create(self, session: requests.Session, password: str, username: str, first_name: str) -> bool:
 
         payload = {
             "enc_password": Utils.encrypt_password(password),
-            "email": email,
+            "email": "eggrrrrferg@gmail.com",
             "username": username,
             "first_name": first_name,
             "client_id": self.mid,
             "seamless_login_enabled": "1",
             "opt_into_one_tap": "false"
         }
-
         response = session.post(
             url  = "https://www.instagram.com/accounts/web_create_ajax/attempt/", 
             data = payload, 
-            headers = self.__base_headers(session)
+            headers = self.__base_headers(session),
+            proxies = self.proxies
         )
-        
+        print(response.text)
+
         if 'Try Again Later' in response.text:
             return False
             
@@ -213,11 +216,46 @@ class Instagram:
         else:
             True
             
+    def __create_account(self, session: requests.Session, password: str, email: str, username: str, first_name: str, signup_code: str) -> bool:
+        payload = {
+            "enc_password": Utils.encrypt_password(password),
+            "email": email,
+            "username": username,
+            "first_name": first_name,
+            "month": str(random.randint(1, 12)),
+            "day": str(random.randint(1, 27)),
+            "year": str(random.randint(1970, 2000)),
+            "client_id": self.mid,
+            "seamless_login_enabled": "1",
+            "tos_version": "eu",
+            "force_sign_up_code": signup_code
+        }
+    
+    def __verify_code(self, session: requests.Session, email: str, code: str) -> str:
+
+        payload = {
+            "code": code,
+            "device_id": self.mid,
+            "email": email
+        }
+        
+        response = session.post(
+            url  = "https://i.instagram.com/api/v1/accounts/check_confirmation_code/", 
+            data = payload, 
+            headers = self.__base_headers(session),
+            proxies = self.proxies
+        )
+
+        print(response.text)
+        __signup_code = response.json()["signup_code"]
+        
+        return __signup_code
+    
     def __verify_mail(self, session: requests.Session) -> (dict and json):
         __email_client = Email()
         __email = __email_client.get_mail()
         
-        print()
+        print(__email)
         
         payload = {
             "device_id": self.mid,
@@ -227,31 +265,35 @@ class Instagram:
         response = session.post(
             url  = "https://i.instagram.com/api/v1/accounts/send_verify_email/", 
             data = payload, 
-            headers = self.__base_headers(session)
+            headers = self.__base_headers(session),
+            proxies = self.proxies
         )
         print(response.json())
-        if response.json()['email_send'] != True:
+        if response.json()['email_sent'] != True:
             print(response.json())
             return False
         
-        code = None
+        __veri_code = None
         while True:
             time.sleep(1)
             for mail in __email_client.fetch_inbox():
                 content = __email_client.get_message_content(mail['id'])
-                code = re.findall(r'(\d{6,6})', content)[0]
-                if code:
-                    print(Utils.sprint("*", f"Code: {Col.blue}{code}"))
+                __veri_code = re.findall(r'(\d{6,6})', content)[0]
+                if __veri_code:
+                    print(Utils.sprint("*", f"Code: {Col.blue}{__veri_code}"))
                     break
-            if code:
+            if __veri_code:
                 break
         
-        return code
+        __signup_code = self.__verify_code(session, __email, __veri_code)
+        return __signup_code
+        
+        
     def main(self) -> None:
         with requests.Session() as session:
             headers = self.__get_headers(session)
             print(Utils.sprint("*", headers))
-            x = self.__init_create(session, "Felipe@0411", "zfzoeignzgz@gmail.com", "roinerfe3", "Felipe")
+            x = self.__init_create(session, "Felipe@0411", "roinerfeef3", "Felipe")
             print(Utils.sprint("*", x))
             
             if x is True:
