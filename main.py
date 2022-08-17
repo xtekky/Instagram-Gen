@@ -173,7 +173,7 @@ class Instagram:
         return session.cookies.get_dict()
     
     
-    def __init_create(self, session: requests.Session, password: str, email: str, username: str, first_name: str) -> None:
+    def __init_create(self, session: requests.Session, password: str, email: str, username: str, first_name: str) -> bool:
 
         payload = {
             "enc_password": f"#PWD_INSTAGRAM_BROWSER:0:{int(time.time())}:{password}",
@@ -202,14 +202,53 @@ class Instagram:
             
         else:
             True
+            
+    def __verify_mail(self, session: requests.Session) -> (dict and json):
+        __email_client = Email()
+        __email = __email_client.get_mail()
         
+        print()
+        
+        payload = {
+            "device_id": self.mid,
+            "email": __email
+        }
+        
+        response = session.post(
+            url  = "https://i.instagram.com/api/v1/accounts/send_verify_email/", 
+            data = payload, 
+            headers = self.__base_headers(session)
+        )
+        
+        if response.json()['email_send'] != True:
+            print(response.json())
+            return False
+        
+        code = None
+        while True:
+            time.sleep(1)
+            for mail in __email_client.fetch_inbox():
+                content = __email_client.get_message_content(mail['id'])
+                code = re.findall(r'(\d{6,6})', content)[0]
+                if code:
+                    print(Utils.sprint("*", f"Code: {Col.blue}{code}"))
+                    break
+            if code:
+                break
+        
+        return code
     def main(self) -> None:
         with requests.Session() as session:
             headers = self.__get_headers(session)
             print(Utils.sprint("*", headers))
-            x = self.__init_create(session, "erfeferf", "zfzoeignzgz@gmail.com", "roinerfe3", "erfefe")
+            x = self.__init_create(session, "erfef", "zfzoeignzgz@gmail.com", "erfefer2332ef", "erfe")
             print(Utils.sprint("*", x))
             
+            if x is True:
+                r = self.__verify_mail(session)
+                print(r)
+                
+
 
 if __name__ == '__main__':
     Instagram().main()
