@@ -84,6 +84,16 @@ class Utils:
             msg,
             Col.blue, Col.reset
         )
+    
+    @staticmethod
+    def encrypt_password(password: str) -> str:
+        data = requests.get("https://www.instagram.com/data/shared_data/").json()["encryption"]
+        
+        public_key = data["public_key"]
+        key_id = data["key_id"]
+        version = data["version"]
+        return f"#PWD_INSTAGRAM_BROWSER:0:{int(time.time())}:{password}"
+
 
 class Instagram:
     def __init__(self) -> None:
@@ -176,7 +186,7 @@ class Instagram:
     def __init_create(self, session: requests.Session, password: str, email: str, username: str, first_name: str) -> bool:
 
         payload = {
-            "enc_password": f"#PWD_INSTAGRAM_BROWSER:0:{int(time.time())}:{password}",
+            "enc_password": Utils.encrypt_password(password),
             "email": email,
             "username": username,
             "first_name": first_name,
@@ -219,7 +229,7 @@ class Instagram:
             data = payload, 
             headers = self.__base_headers(session)
         )
-        
+        print(response.json())
         if response.json()['email_send'] != True:
             print(response.json())
             return False
@@ -241,7 +251,7 @@ class Instagram:
         with requests.Session() as session:
             headers = self.__get_headers(session)
             print(Utils.sprint("*", headers))
-            x = self.__init_create(session, "erfef", "zfzoeignzgz@gmail.com", "erfefer2332ef", "erfe")
+            x = self.__init_create(session, "Felipe@0411", "zfzoeignzgz@gmail.com", "roinerfe3", "Felipe")
             print(Utils.sprint("*", x))
             
             if x is True:
