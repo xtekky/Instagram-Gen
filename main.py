@@ -239,6 +239,13 @@ class Instagram:
             "tos_version": "eu",
             "force_sign_up_code": signup_code
         }
+        
+        return session.post(
+            url  = "https://www.instagram.com/accounts/web_create_ajax/", 
+            data = payload, 
+            headers = self.__base_headers(session),
+            proxies = self.proxies
+        )
     
     def __verify_code(self, session: requests.Session, email: str, code: str) -> str:
 
@@ -317,7 +324,7 @@ class Instagram:
                 print(__email)
                 print(__signup_code)
             
-                self.__create_account(
+                response = self.__create_account(
                     session     = session,
                     password    = password,
                     email       = __email,
@@ -325,6 +332,8 @@ class Instagram:
                     first_name  = first_name,
                     signup_code =__signup_code
                 )
+                
+                print(response)
 
 if __name__ == '__main__':
     Instagram().main()
