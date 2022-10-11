@@ -1,6 +1,5 @@
 from faker import Faker
 from pystyle import Col
-from random import choice, choices, randint
 from time import time
 
 import string
