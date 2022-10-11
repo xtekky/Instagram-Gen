@@ -1,19 +1,19 @@
 from faker import Faker
 from pystyle import Col
+from random import randint
+from re import findall
+from requests import Response, Session
 from temp_mail import TempEmail
 from utils import Utils
 
 import json
-import random
-import re
-import requests
 import time
 
 
 class Instagram:
     def __init__(self, proxy=None) -> None:
         self.mid = None
-        self.crsf = None
+        self.csrf = None
         self.asbd_id = None
         self.fbapp_id = None
         self.device_id = None
@@ -26,59 +26,59 @@ class Instagram:
 
     @staticmethod
     def __x_mid() -> str:
-        return "".join(
-            [Utils.base36(random.randint(2**29, 2**32), 36) for _ in range(8)]
-        )
+        return "".join([Utils.base36(randint(2**29, 2**32), 36) for _ in range(8)])
 
-    def __base_headers(self, session: requests.Session, addon={}) -> dict:
+    def __base_headers(self, session: Session, addon=None) -> dict:
+        if addon is None:
+            addon = {}
         __base_headers = {
-            "authority": "www.instagram.com",
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-            "accept-language": "en",
-            "cache-control": "no-cache",
-            "pragma": "no-cache",
-            "sec-ch-ua": '".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "none",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
-            "x-ig-www-claim": "0",
-            "x-mid": self.mid,
-            "x-instagram-ajax": self.rollout_hash,
-            "x-asbd-id": self.asbd_id,
-            "x-csrftoken": self.crsf,
-            "x-ig-app-id": self.fbapp_id,
-            "cookie": Utils.cookie_to_headers(session.cookies.get_dict()),
+            "Authority": "www.instagram.com",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "Accept-Language": "en",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Sec-CH-UA": '".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
+            "X-IG-WWW-Claim": "0",
+            "X-Mid": self.mid,
+            "X-Instagram-AJAX": self.rollout_hash,
+            "X-ASBD-ID": self.asbd_id,
+            "x-CSRFTOKEN": self.csrf,
+            "X-IG-App-ID": self.fbapp_id,
+            "Cookie": Utils.cookie_to_headers(session.cookies.get_dict()),
         }
 
-        __base_headers.update(addon)
+        __base_headers |= addon
 
         return __base_headers
 
-    def __init_session(self, session: requests.Session) -> dict:
+    def __init_session(self, session: Session) -> dict:
         headers = {
-            "authority": "www.instagram.com",
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-            "accept-language": "en",
-            "cache-control": "no-cache",
-            "pragma": "no-cache",
-            "sec-ch-ua": '".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "sec-fetch-site": "none",
-            "sec-fetch-user": "?1",
-            "upgrade-insecure-requests": "1",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
-            "x-ig-www-claim": "0",
+            "Authority": "www.instagram.com",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "Accept-Language": "en",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Sec-CH-UA": '".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
+            "X-IG-WWW-Claim": "0",
         }
 
-        libcommons_hash = re.findall(
+        libcommons_hash = findall(
             r"(?<=ConsumerLibCommons\.js\/)[a-z0-9]{12}",
             session.get(url="https://www.instagram.com/", headers=headers).text,
         )[0]
@@ -88,8 +88,8 @@ class Instagram:
             headers=headers,
         ).text
 
-        self.asbd_id = re.findall(r"ASBD_ID='(\d+)'", res)[0]
-        self.fbapp_id = re.findall(r"AppId='(\d+)'", res)[0]
+        self.asbd_id = findall(r"ASBD_ID='(\d+)'", res)[0]
+        self.fbapp_id = findall(r"AppId='(\d+)'", res)[0]
 
         data = session.get(
             url=("https://" + "www.instagram.com"),
@@ -97,19 +97,19 @@ class Instagram:
             proxies=self.proxies,
         ).text
 
-        self.device_id = re.findall(r'(?<="device_id":")[A-Z0-9\-]{35,36}', data)[0]
-        self.crsf = re.findall(r'(?<="csrf_token":")[a-zA-Z0-9]{31,32}', data)[0]
-        self.rollout_hash = re.findall(r'(?<="rollout_hash":")[a-z0-9]{11,12}', data)[0]
+        self.device_id = findall(r'(?<="device_id":")[A-Z0-9\-]{35,36}', data)[0]
+        self.csrf = findall(r'(?<="csrf_token":")[a-zA-Z0-9]{31,32}', data)[0]
+        self.rollout_hash = findall(r'(?<="rollout_hash":")[a-z0-9]{11,12}', data)[0]
         self.mid = Instagram.__x_mid()
 
-        session.cookies["csrftoken"] = self.crsf
+        session.cookies["csrftoken"] = self.csrf
         session.cookies["mid"] = self.mid
         session.cookies["ig_did"] = self.rollout_hash
 
         return session.cookies.get_dict()
 
     def __init_create(
-        self, session: requests.Session, password: str, username: str, first_name: str
+        self, session: Session, password: str, username: str, first_name: str
     ) -> bool:
 
         payload = {
@@ -141,26 +141,25 @@ class Instagram:
         elif "username isn't" in response.text:
             return False
 
-        else:
-            True
+        return True
 
     def __create_account(
         self,
-        session: requests.Session,
+        session: Session,
         password: str,
         email: str,
         username: str,
         first_name: str,
         signup_code: str,
-    ) -> bool:
+    ) -> Response:
         payload = {
             "enc_password": Utils.encrypt_password(password),
             "email": email,
             "username": username,
             "first_name": first_name,
-            "month": str(random.randint(1, 12)),
-            "day": str(random.randint(1, 27)),
-            "year": str(random.randint(1970, 2000)),
+            "month": str(randint(1, 12)),
+            "day": str(randint(1, 27)),
+            "year": str(randint(1970, 2000)),
             "client_id": self.mid,
             "seamless_login_enabled": "1",
             "tos_version": "eu",
@@ -174,7 +173,7 @@ class Instagram:
             proxies=self.proxies,
         )
 
-    def __verify_code(self, session: requests.Session, email: str, code: str) -> str:
+    def __verify_code(self, session: Session, email: str, code: str) -> str:
 
         payload = {"code": code, "device_id": self.mid, "email": email}
 
@@ -186,11 +185,9 @@ class Instagram:
         )
 
         print(response.text)
-        __signup_code = response.json()["signup_code"]
+        return response.json()["signup_code"]
 
-        return __signup_code
-
-    def __verify_mail(self, session: requests.Session) -> (dict and json):
+    def __verify_mail(self, session: Session) -> (dict and json):
         __email_client = TempEmail()
         __email = __email_client.get_mail()
 
@@ -214,7 +211,7 @@ class Instagram:
             time.sleep(1)
             for mail in __email_client.fetch_inbox():
                 content = __email_client.get_message_content(mail["id"])
-                __veri_code = re.findall(r"(\d{6,6})", content)[0]
+                __veri_code = findall(r"(\d{6})", content)[0]
                 if __veri_code:
                     print(Utils.sprint("*", f"Code: {Col.blue}{__veri_code}"))
                     break
@@ -225,7 +222,7 @@ class Instagram:
         return __email, __signup_code
 
     def main(self) -> None:
-        with requests.Session() as session:
+        with Session() as session:
             self.__init_session(session)
 
             faker_session = Faker()
@@ -244,7 +241,7 @@ class Instagram:
                 print(__email)
                 print(__signup_code)
 
-                response: requests.Response = self.__create_account(
+                response: Response = self.__create_account(
                     session=session,
                     password=password,
                     email=__email,
